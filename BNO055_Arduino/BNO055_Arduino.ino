@@ -22,18 +22,25 @@ double accX = 0, accY = 0, accZ = 0;
 //raw gyro values
 double gyroX = 0, gyroY = 0, gyroZ = 0;
 
+unsigned long prevTime;
+
 void setup() {
   Serial.begin(19200); //begins the serial monitor
 
   Wire.begin(); //begins communication with all i2c devices
 
+  Wire.setClock(10000000); //changed the i2c clock to 1MHz
+
   bnoInitialize(); //initialized the BNO055
 }
 
 void loop() {
+  prevTime = micros();
+  
   gyroData();
   accData();
 
+  /*
   Serial.print(gyroX);
   Serial.print(",");
   Serial.print(gyroY);
@@ -45,6 +52,10 @@ void loop() {
   Serial.print(accY);
   Serial.print(",");
   Serial.println(accZ);
+  Serial.print(",");
+  */
+  
+  Serial.println(micros() - prevTime);
 }
 
 /*
@@ -56,7 +67,7 @@ void gyroData() {
   Wire.beginTransmission(ADDR);
   Wire.write(GYRO_DATA);
   Wire.endTransmission(false);
-  Wire.requestFrom(ADDR, 6, true);
+  Wire.requestFrom(ADDR, 6, false);
   
   gyroX = (int16_t)(Wire.read()|Wire.read()<<8) / 900.0;
   gyroY = (int16_t)(Wire.read()|Wire.read()<<8) / 900.0;
@@ -68,7 +79,7 @@ void accData() {
   Wire.beginTransmission(ADDR);
   Wire.write(ACC_DATA);
   Wire.endTransmission(false);
-  Wire.requestFrom(ADDR, 6, true);
+  Wire.requestFrom(ADDR, 6, false);
   
   accY = (int16_t)(Wire.read()|Wire.read()<<8) / 100.0;
   accX = (int16_t)(Wire.read()|Wire.read()<<8) / 100.0;
@@ -83,7 +94,7 @@ void bnoInitialize() {
   Wire.beginTransmission(ADDR); //begin talking to the BNO055
   Wire.write(CHIP_ID); //ask to talk to the CHIP_ID
   Wire.endTransmission(false); //ends the transmission, the false makes sure that no other master uses the BNO
-  Wire.requestFrom(ADDR, 1, true); // request 1 byte from the BNO, sends true to release the BNO
+  Wire.requestFrom(ADDR, 1, false); // request 1 byte from the BNO, sends true to release the BNO
   while(Wire.read() != 0xA0); //waits until the value returned is equal to the default value of the register
 
   writeToBNO(OPR_MODE, 0b00001000); //changes the operating mode to IMU
